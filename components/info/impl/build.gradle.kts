@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":components:info:api"))
     implementation(project(":components:pair:api"))
     implementation(project(":components:screenstreaming:api"))
+    implementation(project(":components:telegram:api"))
     implementation(project(":components:filemanager:api"))
     implementation(project(":components:debug:api"))
 

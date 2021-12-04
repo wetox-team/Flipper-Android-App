@@ -27,6 +27,7 @@ fun ComposeInfoScreen(
     connectionState: ConnectionState? = null,
     onOpenScreen: (DeviceSubScreen) -> Unit = {},
     connectionToAnotherDeviceButton: () -> Unit = {},
+    connectionToTelegram: () -> Unit = {}
 ) {
     Column {
         Column(modifier = Modifier.weight(weight = 1f)) {
@@ -66,6 +67,13 @@ fun ComposeInfoScreen(
                 onClick = connectionToAnotherDeviceButton
             ) {
                 Text(text = stringResource(R.string.info_connection_to_another_device))
+            }
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                onClick = connectionToTelegram
+            ) {
+                Text(text = "telegram")
             }
         }
     }

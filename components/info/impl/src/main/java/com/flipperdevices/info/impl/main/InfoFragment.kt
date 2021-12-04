@@ -17,6 +17,7 @@ import com.flipperdevices.info.impl.main.viewmodel.InfoViewModel
 import com.flipperdevices.pair.api.PairComponentApi
 import com.flipperdevices.pair.api.PairScreenArgument
 import com.flipperdevices.screenstreaming.api.ScreenStreamingApi
+import com.flipperdevices.telegram.api.TelegramApi
 import javax.inject.Inject
 
 class InfoFragment : ComposeFragment() {
@@ -31,6 +32,9 @@ class InfoFragment : ComposeFragment() {
 
     @Inject
     lateinit var screenStreaming: ScreenStreamingApi
+
+    @Inject
+    lateinit var telegram: TelegramApi
 
     private val viewModel by viewModels<InfoViewModel>()
 
@@ -53,6 +57,8 @@ class InfoFragment : ComposeFragment() {
                 DeviceSubScreen.SCREEN_STREAMING -> screenStreaming.provideScreen()
             }
             requireRouter().navigateTo(screen)
+        }, connectionToTelegram = {
+            requireRouter().navigateTo(telegram.provideScreen())
         })
     }
 }

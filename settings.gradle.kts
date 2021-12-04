@@ -45,6 +45,9 @@ include(":components:analytics:shake2report:impl")
 include(":components:screenstreaming:impl")
 include(":components:screenstreaming:api")
 
+include(":components:telegram:impl")
+include(":components:telegram:api")
+
 include(":components:share:api")
 include(":components:share:export")
 include(":components:share:common")

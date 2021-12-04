@@ -33,6 +33,9 @@ dependencies {
     implementation(project(":components:screenstreaming:api"))
     implementation(project(":components:screenstreaming:impl"))
 
+    implementation(project(":components:telegram:api"))
+    implementation(project(":components:telegram:impl"))
+
     implementation(project(":components:share:api"))
     implementation(project(":components:share:receive"))
     implementation(project(":components:share:export"))
