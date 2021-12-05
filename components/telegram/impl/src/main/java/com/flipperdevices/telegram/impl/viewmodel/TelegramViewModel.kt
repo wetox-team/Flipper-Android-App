@@ -49,6 +49,7 @@ class TelegramViewModel(
                 }
             }.launchIn(viewModelScope)
         }
+        sendMessages()
     }
 
     fun requestCodeTelegram(phone: String) {
