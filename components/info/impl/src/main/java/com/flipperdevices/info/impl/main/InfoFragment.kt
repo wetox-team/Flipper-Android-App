@@ -59,6 +59,8 @@ class InfoFragment : ComposeFragment() {
             requireRouter().navigateTo(screen)
         }, connectionToTelegram = {
             requireRouter().navigateTo(telegram.provideScreen())
+        }, sendTestRpc = {
+            viewModel.sendTestCommand()
         })
     }
 }
