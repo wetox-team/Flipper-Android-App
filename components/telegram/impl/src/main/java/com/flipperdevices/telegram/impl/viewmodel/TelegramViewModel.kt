@@ -32,6 +32,8 @@ class TelegramViewModel(
     private val msgText = MutableStateFlow("Stoped")
     private val telegramPhoneNumber = MutableStateFlow("")
     private val telegramAuthCode = MutableStateFlow("")
+    private val telegramPhoneNumberReady = MutableStateFlow(false)
+    private val telegramAuthCodeReady = MutableStateFlow(false)
     private val tdLibDatabase = File(application.filesDir, "tdlibdatabase")
     private val telegramDialogsState: Array<TelegramDialog?> = arrayOf(null, null, null)
     private val telegramMessagesState: Array<TelegramMessage?> = arrayOf(null, null, null)
@@ -49,16 +51,17 @@ class TelegramViewModel(
         }
     }
 
-    fun requestCodeTelegram(phone: String) {
+    fun requestCodeTelegram() {
+        var view = this
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                val resultHandler = TelegramDebugResultHandler(phone, tdLibDatabase)
+                val resultHandler = TelegramDebugResultHandler(tdLibDatabase)
                 telegramClint = Client.create(
                     resultHandler,
                     TelegramExceptionHandler(),
                     TelegramExceptionHandler()
                 )
-                resultHandler.inject(telegramClint!!)
+                resultHandler.inject(view)
             }
         }
     }
@@ -69,6 +72,9 @@ class TelegramViewModel(
     fun getTelegramAuthCode() = telegramAuthCode
     fun getTelegramDialogsState() = telegramDialogsState
     fun getTelegramMessagesState() = telegramMessagesState
+    fun getTelegramClient() = telegramClint
+    fun getTelegramPhoneNumberReady() = telegramPhoneNumberReady
+    fun getTelegramAuthCodeReady() = telegramAuthCodeReady
 
     private fun onStartStreaming(serviceApi: FlipperServiceApi) {
         msgText.value = "Started"

@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.fragment.app.viewModels
+import com.flipperdevices.core.log.info
 import com.flipperdevices.core.ui.ComposeFragment
 import com.flipperdevices.telegram.impl.composable.ComposableScreen
 import com.flipperdevices.telegram.impl.model.TelegramState
@@ -32,7 +33,18 @@ class TelegramFragment : ComposeFragment() {
                 }
             },
             onPhoneFilling = { phone ->
-                telegramViewModel.requestCodeTelegram(phone)
+                if (telegramViewModel.getTelegramState().value == TelegramState.ENABLED) {
+                    if (phone.isEmpty()) {
+                        telegramViewModel.getMsgText().value = "Error: enter phone number"
+                    } else {
+                        telegramViewModel.getTelegramPhoneNumber().value = phone
+                        telegramViewModel.getMsgText().value = "OK, now enter auth code from TG"
+                        telegramViewModel.getTelegramPhoneNumberReady().value = true
+                        telegramViewModel.requestCodeTelegram()
+                    }
+                } else {
+                    telegramViewModel.getMsgText().value = "Error: you need to start telegram"
+                }
             },
             onAuthCodeFilling = { code ->
                 if (telegramViewModel.getTelegramState().value == TelegramState.ENABLED) {
@@ -42,10 +54,8 @@ class TelegramFragment : ComposeFragment() {
                         telegramViewModel.getMsgText().value = "Error: enter code"
                     } else {
                         telegramViewModel.getTelegramAuthCode().value = code
+                        telegramViewModel.getTelegramAuthCodeReady().value = true
                         telegramViewModel.getMsgText().value = "Success!"
-                        // ?Scope().launch {
-                        // call tdlib
-                        // }
                     }
                 } else {
                     telegramViewModel.getMsgText().value = "Error: you need to start telegram"

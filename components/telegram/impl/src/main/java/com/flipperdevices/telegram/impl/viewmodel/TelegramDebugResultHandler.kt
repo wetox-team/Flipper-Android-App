@@ -1,5 +1,6 @@
 package com.flipperdevices.telegram.impl.viewmodel
 
+import android.util.Log
 import com.flipperdevices.core.log.LogTagProvider
 import com.flipperdevices.core.log.info
 import java.io.File
@@ -9,10 +10,10 @@ import org.drinkless.td.libcore.telegram.TdApi.CheckDatabaseEncryptionKey
 import org.drinkless.td.libcore.telegram.TdApi.SetAuthenticationPhoneNumber
 
 class TelegramDebugResultHandler(
-    private val phoneNumber: String,
     private val databaseDir: File
 ) : Client.ResultHandler, LogTagProvider {
     override val TAG = "TelegramDebugResultHandler"
+    private lateinit var tgViewModel: TelegramViewModel
     private lateinit var client: Client
 
     override fun onResult(tdLibObject: TdApi.Object) {
@@ -42,15 +43,30 @@ class TelegramDebugResultHandler(
                 client.send(CheckDatabaseEncryptionKey(), AuthorizationRequestHandler())
             }
             TdApi.AuthorizationStateWaitPhoneNumber.CONSTRUCTOR -> {
-                client.send(
-                    SetAuthenticationPhoneNumber(phoneNumber, null),
-                    AuthorizationRequestHandler()
-                )
+                info { "WTF-PHONE-READY: ${tgViewModel.getTelegramPhoneNumber().value}" }
+                if (tgViewModel.getTelegramPhoneNumberReady().value) {
+                    client.send(
+                        SetAuthenticationPhoneNumber(
+                            tgViewModel.getTelegramPhoneNumber().value,
+                            null
+                        ),
+                        AuthorizationRequestHandler()
+                    )
+                }
+            }
+            TdApi.AuthorizationStateWaitCode.CONSTRUCTOR -> {
+                if (tgViewModel.getTelegramAuthCodeReady().value) {
+                    client.send(
+                        TdApi.CheckAuthenticationCode(tgViewModel.getTelegramAuthCode().value),
+                        AuthorizationRequestHandler()
+                    )
+                }
             }
         }
     }
 
-    fun inject(client: Client) {
-        this.client = client
+    fun inject(tgViewModel: TelegramViewModel) {
+        this.tgViewModel = tgViewModel
+        this.client = tgViewModel.getTelegramClient()!!
     }
 }
