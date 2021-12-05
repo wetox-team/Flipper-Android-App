@@ -20,7 +20,7 @@ class TelegramDebugResultHandler(
     private lateinit var client: Client
 
     override fun onResult(tdLibObject: TdApi.Object) {
-        info { "Receive $tdLibObject" }
+        // info { "Receive $tdLibObject" }
 
         val authorizationState = tdLibObject as? TdApi.UpdateAuthorizationState ?: return
 

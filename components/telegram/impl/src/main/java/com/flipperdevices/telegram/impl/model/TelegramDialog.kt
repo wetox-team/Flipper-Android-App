@@ -6,7 +6,7 @@ import com.flipperdevices.protobuf.telegram.telegramMessage
 
 data class TelegramDialog(
     var id: Long,
-    var name: String?,
+    var name: String,
     var messages: Array<TelegramMessage>
 ) {
     override fun equals(other: Any?): Boolean {
@@ -31,13 +31,13 @@ data class TelegramDialog(
 
     fun toProtobufData(): Telegram.TelegramDialog {
         return telegramDialog {
-            this.id = id
-            this.name = name
+            this.id = this@TelegramDialog.id.toInt()
+            this.name = this@TelegramDialog.name
             this.messages.addAll(
-                messages.map {
+                this@TelegramDialog.messages.map {
                     telegramMessage {
                         text = it.text
-                        isOur = it.isOur
+                        isOur = it.is_our
                     }
                 }
             )

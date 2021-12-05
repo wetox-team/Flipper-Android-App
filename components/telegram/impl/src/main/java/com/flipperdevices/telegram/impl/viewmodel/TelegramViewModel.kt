@@ -19,18 +19,20 @@ import com.flipperdevices.telegram.impl.model.TelegramState
 import java.io.File
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.drinkless.td.libcore.telegram.Client
 import org.drinkless.td.libcore.telegram.TdApi
-import org.drinkless.td.libcore.telegram.TdApi.ChatListMain
 import org.drinkless.td.libcore.telegram.TdApi.Chats
-import org.drinkless.td.libcore.telegram.TdApi.LoadChats
 
+private val asciiRegexp = "[^A-Za-z0-9 ]".toRegex()
 
 class TelegramViewModel(
     application: Application
@@ -38,7 +40,6 @@ class TelegramViewModel(
     @Inject
     lateinit var serviceProvider: FlipperServiceProvider
 
-    private var serviceApi: FlipperServiceApi? = null
     private var telegramClint: Client? = null
     private val telegramState = MutableStateFlow(TelegramState.DISABLED)
     private val msgText = MutableStateFlow("Stoped")
@@ -50,7 +51,6 @@ class TelegramViewModel(
     init {
         ComponentHolder.component<TelegramComponent>().inject(this)
         serviceProvider.provideServiceApi(this) { serviceApiInternal ->
-            serviceApi = serviceApiInternal
             telegramState.onEach { state ->
                 when (state) {
                     TelegramState.ENABLED -> onStartStreaming(serviceApiInternal)
@@ -59,6 +59,7 @@ class TelegramViewModel(
             }.launchIn(viewModelScope)
         }
         sendMessages()
+        subscribeOnTelegramRequest()
     }
 
     fun requestCodeTelegram(phone: String) {
@@ -121,6 +122,7 @@ class TelegramViewModel(
     fun getTelegramAuthCodeReady(): StateFlow<String?> = telegramAuthCodeReady
 
     private fun onStartStreaming(serviceApi: FlipperServiceApi) {
+        sendMessages()
         msgText.value = "Started"
     }
 
@@ -184,26 +186,94 @@ class TelegramViewModel(
         }
     }*/
 
-    fun getDialogs() {
-        telegramClint!!.send(TdApi.GetChats(null, 3)) { dialog ->
+    fun subscribeOnTelegramRequest() {
+        serviceProvider.provideServiceApi(this) {
+            it.requestApi.notificationFlow().onEach {
+                if (it.hasTgStateRequest()) {
+                    sendDialogs()
+                }
+            }.launchIn(viewModelScope)
+        }
+    }
+
+    fun sendDialogs() {
+        val client = telegramClint!!
+        client.send(TdApi.GetChats(null, 3)) { dialog ->
             when (dialog.constructor) {
-                TdApi.Error.CONSTRUCTOR -> {info {"WTF DONT GOT DIALOGS: $dialog"}}
+                TdApi.Error.CONSTRUCTOR -> {
+                    info { "WTF DONT GOT DIALOGS: $dialog" }
+                }
                 TdApi.Chats.CONSTRUCTOR -> {
-                    info {"WTF GOT DIALOGS: $dialog"}
+                    info { "WTF GOT DIALOGS: $dialog" }
                     val chatIds = (dialog as Chats).chatIds
                     info { "CHAT-IDS: $chatIds" }
-                    var i = 0;
-                    chatIds.forEach { id ->
-                        telegramDialogsState[i] = TelegramDialog(
-                            id=id,
-                            name=null,
-                            messages = arrayOf()
-                        )
-                        i++
+                    var i = 0
+
+                    viewModelScope.launch {
+                        val telegramDialogs = chatIds.map { getDialog(client, it).single() }
+                            .map {
+                                TelegramDialog(
+                                    it.id,
+                                    it.title.take(9),
+                                    arrayOf(
+                                        TelegramMessage(
+                                            (it.lastMessage?.content as? TdApi.MessageText)?.text?.text?.toAscii()
+                                                ?.take(
+                                                    19
+                                                ) ?: "null",
+                                            false
+                                        )
+                                    )
+                                )
+                            }.map { it.toProtobufData() }
+                        serviceProvider.provideServiceApi(this@TelegramViewModel) { serviceApi ->
+                            main {
+                                tgStateResponse = telegramStateResponse {
+                                    dialogs.addAll(
+                                        telegramDialogs
+                                    )
+                                }
+                            }.wrapToRequest().also { request ->
+                                serviceApi.requestApi.request(request).launchIn(viewModelScope)
+                            }
+                        }
                     }
-                    var a = telegramDialogsState;
                 }
-                else -> {info {"WTF DIALOGS: $dialog"}}
+                else -> {
+                    info { "WTF DIALOGS: $dialog" }
+                }
             }
         }
-}}
+    }
+
+    fun String.toAscii(): String {
+        val newString = asciiRegexp.replace(this, "").replace(" ", "_")
+        if (newString.isEmpty()) {
+            return "Empty"
+        }
+        return newString
+    }
+
+    fun getDialog(client: Client, id: Long) = callbackFlow {
+        client.send(TdApi.GetChat(id)) { dialog ->
+            when (dialog.constructor) {
+                TdApi.Error.CONSTRUCTOR -> {
+                    info { "WTF DONT GOT DIALOGS: $dialog" }
+                }
+                TdApi.Chat.CONSTRUCTOR -> {
+                    info { "WTF GOT DIALOGS: $dialog" }
+                    launch {
+                        send(dialog as TdApi.Chat)
+                        close()
+                    }
+                }
+                else -> {
+                    info { "WTF DIALOGS: $dialog" }
+                }
+            }
+        }
+        awaitClose {
+            info { "Close" }
+        }
+    }
+}

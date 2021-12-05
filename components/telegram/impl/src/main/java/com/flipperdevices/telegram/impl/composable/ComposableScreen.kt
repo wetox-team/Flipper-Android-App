@@ -58,12 +58,12 @@ fun ComposableScreen(
             var telegramCode by remember { mutableStateOf("") }
 
             TextField(
-                modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp),
                 value = telegramPhoneNumber,
                 onValueChange = {
-                    if (it.endsWith("d"))
-                        viewModel.getDialogs()
-                    else if (it.endsWith("\n"))
+                    if (it.endsWith("\n"))
                         onPhoneFilling(it.removeSuffix("\n"))
                     else
                         telegramPhoneNumber = it
@@ -72,7 +72,9 @@ fun ComposableScreen(
 
             )
             TextField(
-                modifier = Modifier.fillMaxWidth().padding(bottom=200.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 200.dp),
                 value = telegramCode,
                 onValueChange = {
                     if (it.endsWith("\n"))
@@ -106,4 +108,3 @@ fun ComposableScreen(
         }
     }
 }
-
