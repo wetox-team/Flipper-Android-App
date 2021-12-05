@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.drinkless.td.libcore.telegram.Client
+import org.drinkless.td.libcore.telegram.TdApi
 
 class TelegramViewModel(
     application: Application
@@ -64,6 +65,36 @@ class TelegramViewModel(
                 telegramPhoneNumberReady.emit(phone)
             }
         }
+    }
+
+    fun sendMessages() {
+        serviceProvider.provideServiceApi(this) { serviceApiInternal ->
+            serviceApiInternal.requestApi.notificationFlow().onEach {
+                if (it.hasTgSendMsgRequest()) {
+                    val request = it.tgSendMsgRequest
+                    sendMessageInternal(request.id.toLong(), request.msg)
+                }
+            }.launchIn(viewModelScope)
+        }
+    }
+
+    private fun sendMessageInternal(id: Long, msg: String) {
+        getTelegramClient()?.send(
+            TdApi.SendMessage(
+                id,
+                0 /* messageThreadId */,
+                0 /* replyToMessageId */,
+                null /* options */,
+                null,
+                TdApi.InputMessageText(
+                    TdApi.FormattedText(msg, emptyArray()),
+                    false,
+                    false
+                )
+            ),
+            DebugResultHandler(),
+            TelegramExceptionHandler()
+        )
     }
 
     fun onSmsCode(code: String) {
