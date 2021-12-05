@@ -1,14 +1,16 @@
 package com.flipperdevices.telegram.impl.viewmodel
 
+import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.flipperdevices.bridge.service.api.FlipperServiceApi
 import com.flipperdevices.bridge.service.api.provider.FlipperServiceProvider
 import com.flipperdevices.core.di.ComponentHolder
-import com.flipperdevices.core.ui.LifecycleViewModel
+import com.flipperdevices.core.ui.AndroidLifecycleViewModel
 import com.flipperdevices.telegram.impl.di.TelegramComponent
 import com.flipperdevices.telegram.impl.model.TelegramDialog
 import com.flipperdevices.telegram.impl.model.TelegramMessage
 import com.flipperdevices.telegram.impl.model.TelegramState
+import java.io.File
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +20,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.drinkless.td.libcore.telegram.Client
 
-class TelegramViewModel : LifecycleViewModel() {
+class TelegramViewModel(
+    application: Application
+) : AndroidLifecycleViewModel(application) {
     @Inject
     lateinit var serviceProvider: FlipperServiceProvider
 
@@ -28,6 +32,7 @@ class TelegramViewModel : LifecycleViewModel() {
     private val msgText = MutableStateFlow("Stoped")
     private val telegramPhoneNumber = MutableStateFlow("")
     private val telegramAuthCode = MutableStateFlow("")
+    private val tdLibDatabase = File(application.filesDir, "tdlibdatabase")
     private val telegramDialogsState: Array<TelegramDialog?> = arrayOf(null, null, null)
     private val telegramMessagesState: Array<TelegramMessage?> = arrayOf(null, null, null)
 
@@ -42,13 +47,18 @@ class TelegramViewModel : LifecycleViewModel() {
                 }
             }.launchIn(viewModelScope)
         }
+    }
+
+    fun requestCodeTelegram(phone: String) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
+                val resultHandler = TelegramDebugResultHandler(phone, tdLibDatabase)
                 telegramClint = Client.create(
-                    //todo: UpdateHandler(),
-                    null,
-                    null
+                    resultHandler,
+                    TelegramExceptionHandler(),
+                    TelegramExceptionHandler()
                 )
+                resultHandler.inject(telegramClint!!)
             }
         }
     }
@@ -61,11 +71,11 @@ class TelegramViewModel : LifecycleViewModel() {
     fun getTelegramMessagesState() = telegramMessagesState
 
     private fun onStartStreaming(serviceApi: FlipperServiceApi) {
-        msgText.value = "Started";
+        msgText.value = "Started"
     }
 
     private fun onPauseStreaming(serviceApi: FlipperServiceApi) {
-        msgText.value = "Stoped";
+        msgText.value = "Stoped"
     }
 
     fun loadLast3Chats() {

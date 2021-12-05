@@ -32,19 +32,7 @@ class TelegramFragment : ComposeFragment() {
                 }
             },
             onPhoneFilling = { phone ->
-                if (telegramViewModel.getTelegramState().value == TelegramState.ENABLED) {
-                    if (phone.isEmpty()) {
-                        telegramViewModel.getMsgText().value = "Error: enter phone number"
-                    } else {
-                        telegramViewModel.getTelegramPhoneNumber().value = phone
-                        telegramViewModel.getMsgText().value = "OK, now enter auth code from TG"
-                        //MainScope().launch {
-                        //}
-                    }
-                } else {
-                    telegramViewModel.getMsgText().value = "Error: you need to start telegram"
-                }
-
+                telegramViewModel.requestCodeTelegram(phone)
             },
             onAuthCodeFilling = { code ->
                 if (telegramViewModel.getTelegramState().value == TelegramState.ENABLED) {
@@ -55,9 +43,9 @@ class TelegramFragment : ComposeFragment() {
                     } else {
                         telegramViewModel.getTelegramAuthCode().value = code
                         telegramViewModel.getMsgText().value = "Success!"
-                        //?Scope().launch {
+                        // ?Scope().launch {
                         // call tdlib
-                        //}
+                        // }
                     }
                 } else {
                     telegramViewModel.getMsgText().value = "Error: you need to start telegram"
