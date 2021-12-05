@@ -1,9 +1,6 @@
 package com.flipperdevices.info.impl.main.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ezhevita.protobuf.telegram.telegramDialog
-import com.ezhevita.protobuf.telegram.telegramMessage
-import com.ezhevita.protobuf.telegram.telegramStateResponse
 import com.flipperdevices.bridge.api.model.FlipperGATTInformation
 import com.flipperdevices.bridge.api.model.wrapToRequest
 import com.flipperdevices.bridge.service.api.FlipperServiceApi
@@ -13,6 +10,9 @@ import com.flipperdevices.core.di.ComponentHolder
 import com.flipperdevices.core.ui.LifecycleViewModel
 import com.flipperdevices.info.impl.di.InfoComponent
 import com.flipperdevices.protobuf.main
+import com.flipperdevices.protobuf.telegram.telegramDialog
+import com.flipperdevices.protobuf.telegram.telegramMessage
+import com.flipperdevices.protobuf.telegram.telegramStateResponse
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,7 +44,7 @@ class InfoViewModel : LifecycleViewModel(), FlipperBleServiceConsumer {
         bleService.provideServiceApi(this) {
             it.requestApi.request(
                 main {
-                    telegramStateResponse {
+                    tgStateResponse = telegramStateResponse {
                         dialogs.add(
                             telegramDialog {
                                 id = 1
