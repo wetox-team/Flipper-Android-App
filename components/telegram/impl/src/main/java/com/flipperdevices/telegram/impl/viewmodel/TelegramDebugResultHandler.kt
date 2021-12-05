@@ -1,16 +1,19 @@
 package com.flipperdevices.telegram.impl.viewmodel
 
-import android.util.Log
 import com.flipperdevices.core.log.LogTagProvider
 import com.flipperdevices.core.log.info
 import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import org.drinkless.td.libcore.telegram.Client
 import org.drinkless.td.libcore.telegram.TdApi
 import org.drinkless.td.libcore.telegram.TdApi.CheckDatabaseEncryptionKey
 import org.drinkless.td.libcore.telegram.TdApi.SetAuthenticationPhoneNumber
 
 class TelegramDebugResultHandler(
-    private val databaseDir: File
+    private val databaseDir: File,
+    private val scope: CoroutineScope
 ) : Client.ResultHandler, LogTagProvider {
     override val TAG = "TelegramDebugResultHandler"
     private lateinit var tgViewModel: TelegramViewModel
@@ -43,23 +46,33 @@ class TelegramDebugResultHandler(
                 client.send(CheckDatabaseEncryptionKey(), AuthorizationRequestHandler())
             }
             TdApi.AuthorizationStateWaitPhoneNumber.CONSTRUCTOR -> {
-                info { "WTF-PHONE-READY: ${tgViewModel.getTelegramPhoneNumber().value}" }
-                if (tgViewModel.getTelegramPhoneNumberReady().value) {
-                    client.send(
-                        SetAuthenticationPhoneNumber(
-                            tgViewModel.getTelegramPhoneNumber().value,
-                            null
-                        ),
-                        AuthorizationRequestHandler()
-                    )
+                scope.launch {
+                    tgViewModel.getTelegramPhoneNumberReady().collect { phoneNumber ->
+                        if (phoneNumber == null) {
+                            return@collect
+                        }
+                        info { "WTF-PHONE-READY: $phoneNumber" }
+                        client.send(
+                            SetAuthenticationPhoneNumber(
+                                phoneNumber,
+                                null
+                            ),
+                            AuthorizationRequestHandler()
+                        )
+                    }
                 }
             }
             TdApi.AuthorizationStateWaitCode.CONSTRUCTOR -> {
-                if (tgViewModel.getTelegramAuthCodeReady().value) {
-                    client.send(
-                        TdApi.CheckAuthenticationCode(tgViewModel.getTelegramAuthCode().value),
-                        AuthorizationRequestHandler()
-                    )
+                scope.launch {
+                    tgViewModel.getTelegramAuthCodeReady().collect { authCode ->
+                        if (authCode == null) {
+                            return@collect
+                        }
+                        client.send(
+                            TdApi.CheckAuthenticationCode(authCode),
+                            AuthorizationRequestHandler()
+                        )
+                    }
                 }
             }
         }

@@ -14,6 +14,7 @@ import java.io.File
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -30,10 +31,8 @@ class TelegramViewModel(
     private var telegramClint: Client? = null
     private val telegramState = MutableStateFlow(TelegramState.DISABLED)
     private val msgText = MutableStateFlow("Stoped")
-    private val telegramPhoneNumber = MutableStateFlow("")
-    private val telegramAuthCode = MutableStateFlow("")
-    private val telegramPhoneNumberReady = MutableStateFlow(false)
-    private val telegramAuthCodeReady = MutableStateFlow(false)
+    private val telegramPhoneNumberReady = MutableStateFlow<String?>(null)
+    private val telegramAuthCodeReady = MutableStateFlow<String?>(null)
     private val tdLibDatabase = File(application.filesDir, "tdlibdatabase")
     private val telegramDialogsState: Array<TelegramDialog?> = arrayOf(null, null, null)
     private val telegramMessagesState: Array<TelegramMessage?> = arrayOf(null, null, null)
@@ -51,30 +50,35 @@ class TelegramViewModel(
         }
     }
 
-    fun requestCodeTelegram() {
+    fun requestCodeTelegram(phone: String) {
         var view = this
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                val resultHandler = TelegramDebugResultHandler(tdLibDatabase)
+                val resultHandler = TelegramDebugResultHandler(tdLibDatabase, viewModelScope)
                 telegramClint = Client.create(
                     resultHandler,
                     TelegramExceptionHandler(),
                     TelegramExceptionHandler()
                 )
                 resultHandler.inject(view)
+                telegramPhoneNumberReady.emit(phone)
             }
+        }
+    }
+
+    fun onSmsCode(code: String) {
+        viewModelScope.launch {
+            telegramAuthCodeReady.emit(code)
         }
     }
 
     fun getMsgText() = msgText
     fun getTelegramState() = telegramState
-    fun getTelegramPhoneNumber() = telegramPhoneNumber
-    fun getTelegramAuthCode() = telegramAuthCode
     fun getTelegramDialogsState() = telegramDialogsState
     fun getTelegramMessagesState() = telegramMessagesState
     fun getTelegramClient() = telegramClint
-    fun getTelegramPhoneNumberReady() = telegramPhoneNumberReady
-    fun getTelegramAuthCodeReady() = telegramAuthCodeReady
+    fun getTelegramPhoneNumberReady(): StateFlow<String?> = telegramPhoneNumberReady
+    fun getTelegramAuthCodeReady(): StateFlow<String?> = telegramAuthCodeReady
 
     private fun onStartStreaming(serviceApi: FlipperServiceApi) {
         msgText.value = "Started"
