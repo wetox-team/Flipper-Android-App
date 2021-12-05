@@ -47,7 +47,7 @@ class InfoViewModel : LifecycleViewModel(), FlipperBleServiceConsumer {
                     tgStateResponse = telegramStateResponse {
                         dialogs.add(
                             telegramDialog {
-                                id = 1
+                                id = 204723509
                                 name = "Test"
                                 messages.add(
                                     telegramMessage {

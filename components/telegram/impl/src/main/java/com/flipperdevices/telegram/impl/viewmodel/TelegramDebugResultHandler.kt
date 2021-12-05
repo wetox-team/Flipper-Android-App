@@ -30,8 +30,8 @@ class TelegramDebugResultHandler(
                 parameters.databaseDirectory = databaseDir.absolutePath
                 parameters.useMessageDatabase = true
                 parameters.useSecretChats = false
-                parameters.apiId = 962214
-                parameters.apiHash = "398276370c4ba2b3b9f6ae27410c817e"
+                parameters.apiId = 19653082
+                parameters.apiHash = "8f546f769a4c769cf75ae8b868dad4ad"
                 parameters.systemLanguageCode = "en"
                 parameters.deviceModel = "Desktop"
                 parameters.applicationVersion = "1.0"

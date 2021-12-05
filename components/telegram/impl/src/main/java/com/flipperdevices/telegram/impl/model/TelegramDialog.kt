@@ -1,5 +1,9 @@
 package com.flipperdevices.telegram.impl.model
 
+import com.flipperdevices.protobuf.telegram.Telegram
+import com.flipperdevices.protobuf.telegram.telegramDialog
+import com.flipperdevices.protobuf.telegram.telegramMessage
+
 data class TelegramDialog(
     var id: Long,
     var name: String?,
@@ -23,5 +27,20 @@ data class TelegramDialog(
         result = 31 * result + name.hashCode()
         result = 31 * result + messages.contentHashCode()
         return result
+    }
+
+    fun toProtobufData(): Telegram.TelegramDialog {
+        return telegramDialog {
+            this.id = id
+            this.name = name
+            this.messages.addAll(
+                messages.map {
+                    telegramMessage {
+                        text = it.text
+                        isOur = it.isOur
+                    }
+                }
+            )
+        }
     }
 }
