@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="enable_telegram">Start telegram</string>
+    <string name="disable_telegram">Stop telegram</string>
     <string name="api_hash">14881488148814881488148814881488</string>
     <string name="api_id">666666</string>
 </resources>
