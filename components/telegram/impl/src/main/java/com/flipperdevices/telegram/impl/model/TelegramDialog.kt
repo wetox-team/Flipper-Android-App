@@ -2,7 +2,7 @@ package com.flipperdevices.telegram.impl.model
 
 data class TelegramDialog(
     var id: Long,
-    var name: String,
+    var name: String?,
     var messages: Array<TelegramMessage>
 ) {
     override fun equals(other: Any?): Boolean {

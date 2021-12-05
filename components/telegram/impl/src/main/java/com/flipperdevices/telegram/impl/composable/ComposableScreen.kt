@@ -61,7 +61,9 @@ fun ComposableScreen(
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
                 value = telegramPhoneNumber,
                 onValueChange = {
-                    if (it.endsWith("\n"))
+                    if (it.endsWith("d"))
+                        viewModel.getDialogs()
+                    else if (it.endsWith("\n"))
                         onPhoneFilling(it.removeSuffix("\n"))
                     else
                         telegramPhoneNumber = it
