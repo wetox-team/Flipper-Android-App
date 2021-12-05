@@ -8,15 +8,20 @@ import com.flipperdevices.core.ui.LifecycleViewModel
 import com.flipperdevices.telegram.impl.di.TelegramComponent
 import com.flipperdevices.telegram.impl.model.TelegramState
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.drinkless.td.libcore.telegram.Client
 
 class TelegramViewModel : LifecycleViewModel() {
     @Inject
     lateinit var serviceProvider: FlipperServiceProvider
 
     private var serviceApi: FlipperServiceApi? = null
+    private var telegramClint: Client? = null
     private val telegramState = MutableStateFlow(TelegramState.DISABLED)
     private val msgText = MutableStateFlow("Stoped")
     private val telegramPhoneNumber = MutableStateFlow("")
@@ -32,6 +37,15 @@ class TelegramViewModel : LifecycleViewModel() {
                     TelegramState.DISABLED -> onPauseStreaming(serviceApiInternal)
                 }
             }.launchIn(viewModelScope)
+        }
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                telegramClint = Client.create(
+                    //todo: UpdateHandler(),
+                    null,
+                    null
+                )
+            }
         }
     }
 
